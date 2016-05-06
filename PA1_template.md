@@ -9,20 +9,23 @@ This R Markdown file explicates the steps required to analyse data from a person
 ###*Loading and preprocessing the data*
 The following code will load the data and add a 'DT' column to the 'data' dataframe that represents the date in POSIXlt format.
 
-```{r load_data}
+
+```r
 data <- read.csv("/users/jshemmell/desktop/Data Science Course 2016/activity.csv")
 ```
 
 ###*What is mean total number of steps taken per day?*
 Here is the code used to calculate first the mean number of steps on each day and then the mean number of steps in total across all days of data collection.
 
-```{r mean_steps}
+
+```r
 steps_day <- aggregate(steps~date, data=data, FUN="sum")
 ```
 
 Below is a histogram of the mean number of steps taken on a given day.
 
-```{r histogram}
+
+```r
 mean_steps_day <- round(mean(steps_day$steps), digits = 0)
 median_steps_day <- round(median(steps_day$steps), digits = 0)
 mean_median_diff <- mean_steps_day - median_steps_day
@@ -30,23 +33,29 @@ hist(steps_day$steps, breaks = 10, col = "darkblue", border = "white", main = "H
 abline(v=mean_steps_day, col = "red", lwd = 2, lty = 2)
 ```
 
-In this data set, the **mean** number of steps taken per day is **`r mean_steps_day`** (red dashed line on histogram), while the **median** is **`r median_steps_day`**. The mean and median values differ by **`r mean_median_diff`**.
+![plot of chunk histogram](figure/histogram-1.png)
+
+In this data set, the **mean** number of steps taken per day is **1.0766 &times; 10<sup>4</sup>** (red dashed line on histogram), while the **median** is **1.0765 &times; 10<sup>4</sup>**. The mean and median values differ by **1**.
 
 ###*What is the average daily activity pattern?*
 Below, the average number of steps (across all days) is plotted for each five minute data recording period.  
-```{r lineplot}
+
+```r
 timeSteps <- aggregate(steps~interval, data=data, FUN = "mean")
 plot(timeSteps, type = "l", main = "Mean steps per 5 minute interval", ylab = "Number of Steps", xlab = "Interval", lwd = 2, col = "darkblue")
 time_of_max <- timeSteps[timeSteps$steps == max(timeSteps$steps), 1]
 abline(v=time_of_max, col = "red", lwd = 2, lty = 2)
 ```
 
-On average across all days, the maximum number of steps was taken during the **`r time_of_max`th** 5 minute recording period (red dashed line on plot). 
+![plot of chunk lineplot](figure/lineplot-1.png)
+
+On average across all days, the maximum number of steps was taken during the **835th** 5 minute recording period (red dashed line on plot). 
 
 ###*Imputing missing values*
 
 The code below calculates the total number of NAs in the dataset and replaces NAs with the average number of steps taken in the corresponding time period across the rest of the days. A new dataset called 'fulldataset' is produced in which all missing values are replaced with the appropriate mean value.  
-```{r}
+
+```r
 total_NAs <- sum(is.na(data))
 fulldataset <- data
 for (i in 1:dim(data)[1]){
@@ -56,9 +65,10 @@ for (i in 1:dim(data)[1]){
 }
 ```
 
-The total number of time points at which there is missing data is **`r total_NAs`**. A histogram of the total steps taken per day is shown below, with the mean represented by a red dashed line. 
+The total number of time points at which there is missing data is **2304**. A histogram of the total steps taken per day is shown below, with the mean represented by a red dashed line. 
 
-```{r histogram2}
+
+```r
 steps_day2 <- aggregate(steps~date, data=fulldataset, FUN="sum")
 mean_steps_day2 <- round(mean(steps_day2$steps), digits = 0)
 median_steps_day2 <- round(median(steps_day2$steps), digits = 0)
@@ -67,12 +77,15 @@ hist(steps_day2$steps, breaks = 10, col = "lightblue", border = "white", main = 
 abline(v=mean_steps_day2, col = "red", lwd = 2, lty = 2)
 ```
 
-In the data set without missing values, the **mean** number of steps taken per day is **`r mean_steps_day2`** (red dashed line on histogram), while the **median** is **`r median_steps_day2`**. The mean and median values now differ by **`r mean_median_diff2`**.
+![plot of chunk histogram2](figure/histogram2-1.png)
+
+In the data set without missing values, the **mean** number of steps taken per day is **1.0766 &times; 10<sup>4</sup>** (red dashed line on histogram), while the **median** is **1.0766 &times; 10<sup>4</sup>**. The mean and median values now differ by **0**.
 
 ###*Are there differences in activity patterns between weekdays and weekends?*
 The code below categorises the data set according to whether data were collected on weekdays or weekends.
 
-```{r act_patterns}
+
+```r
 fulldataset$weekday <- weekdays(strptime(fulldataset$date, format = "%Y-%m-%d"))
 WeekDays <- c("Monday", "Tuesday","Wednesday","Thursday","Friday")
 for (point in 1:dim(fulldataset)[1]) {
@@ -82,15 +95,16 @@ for (point in 1:dim(fulldataset)[1]) {
                 fulldataset$weekday[point] <- "weekend"
         }
 }
-
 ```
 
 This plot presents the number of steps taken over time on weekends (upper plot) versus weekdays (lower plot). On average, more steps were taken on weekend days (42.4) than weekdays (35.6). Steps are taken more consistently across weekend days, whereas a sharp increase in the number of steps taken around intervals 800-950 dominates the weekday data.
 
-```{r lattice_plots}
+
+```r
 library(lattice)
 timeSteps2 <- aggregate(steps~interval+weekday, data=fulldataset, FUN = "mean")
 meansteps <- aggregate(steps~weekday, data=timeSteps2, FUN="mean")
 xyplot(timeSteps2$steps~timeSteps2$interval|timeSteps2$weekday, type = "l", main = "Mean steps over time on weekdays and weekends", ylab = "Number of Steps", xlab = "Interval", lwd = 2, col = "darkblue", layout = c(1,2))
-
 ```
+
+![plot of chunk lattice_plots](figure/lattice_plots-1.png)
